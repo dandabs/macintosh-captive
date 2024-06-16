@@ -1,17 +1,6 @@
-import Head from "next/head";
-import Image from "next/image";
-
 const crypto = require('crypto');
 
-import './style.css'
-import { headers } from "next/headers";
-
-import { LoginForm } from "./loginform";
-import { RedirForm } from "./redirform";
-import { useUser } from "@auth0/nextjs-auth0/client";
 import { getSession } from "@auth0/nextjs-auth0";
-import { NextResponse } from "next/server";
-import { permanentRedirect, redirect } from "next/navigation";
 
 let gatewayname = "", 
     clientip = "",
