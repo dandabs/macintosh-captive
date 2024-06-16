@@ -1,114 +1,258 @@
+import Head from "next/head";
 import Image from "next/image";
-import "./globals.css";
 
-export default function Home() {
-  return (
-    <main className="flex min-h-screen flex-col items-center justify-between p-24">
-      <div className="z-10 max-w-5xl w-full items-center justify-between font-mono text-sm lg:flex">
-        <p className="fixed left-0 top-0 flex w-full justify-center border-b border-gray-300 bg-gradient-to-b from-zinc-200 pb-6 pt-8 backdrop-blur-2xl dark:border-neutral-800 dark:bg-zinc-800/30 dark:from-inherit lg:static lg:w-auto  lg:rounded-xl lg:border lg:bg-gray-200 lg:p-4 lg:dark:bg-zinc-800/30">
-          Get started by editing&nbsp;
-          <code className="font-mono font-bold">app/page.js</code>
-        </p>
-        <div className="fixed bottom-0 left-0 flex h-48 w-full items-end justify-center bg-gradient-to-t from-white via-white dark:from-black dark:via-black lg:static lg:h-auto lg:w-auto lg:bg-none">
-          <a
-            className="pointer-events-none flex place-items-center gap-2 p-8 lg:pointer-events-auto lg:p-0"
-            href="https://vercel.com?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            By{" "}
-            <Image
-              src="/vercel.svg"
-              alt="Vercel Logo"
-              className="dark:invert"
-              width={100}
-              height={24}
-              priority
-            />
-          </a>
+const crypto = require('crypto');
+
+import './style.css'
+import { headers } from "next/headers";
+
+import { LoginForm } from "./loginform";
+import { RedirForm } from "./redirform";
+
+let fullname = "", 
+    email = "", 
+    gatewayname = "", 
+    clientip = "",
+    clientmac = "",
+    client_type = "",
+    cpi_query = "",
+    gatewayurl = "",
+    version = "",
+    originurl = "",
+    gatewayaddress = "", 
+    hid = "", 
+    gatewaymac = "", 
+    clientif = "",
+    redir = "",
+    client_zone = "",
+    imagepath = "",
+    fas,
+    me = "";
+
+export default function Home({ searchParams }) {
+    const headerList = headers();
+    me = headerList.get("x-current-path");
+
+    if (searchParams["status"] != null) {
+        redir = searchParams["redir"];
+        const redir_r = redir.split('fas=');
+        fas = redir_r[1];
+    } else if (searchParams["fas"] != null) {
+        fas = searchParams["fas"];
+    } else {
+        return <p>Error</p>;
+    }
+
+    const decoded = Buffer.from(fas, 'base64').toString('ascii');
+
+    if (fas) {
+        const dec_r = decoded.split(', ');
+
+        dec_r.forEach(dec => {
+            let [name, value] = dec.split("=");
+            switch (name) {
+                case "clientip": clientip = value; break;
+                case "clientmac": clientmac = value; break;
+                case "gatewayname": gatewayname = value; break;
+                case "gatewayurl": gatewayurl = decodeURIComponent(value); break;
+                case "version": version = value; break;
+                case "hid": hid = value; break;
+                case "client_type": client_type = value; break;
+                case "gatewayaddress": gatewayaddress = value; break;
+                case "gatewaymac": gatewaymac = value; break;
+                case "authdir": authdir = value; break;
+                case "originurl": originurl = value; break;
+                case "cpi_query": cpi_query = value; break;
+                case "clientif": clientif = value; break;
+                case "admin_email": admin_email = value; break;
+                case "location": location = value; break;
+            }
+        });
+
+        console.log(clientip);
+    }
+
+    let client_zone_r = clientif.trim().split(" ");
+    if (!client_zone_r[1]) {
+        client_zone = "LocalZone:" + client_zone_r[0];
+    } else {
+        client_zone = "MeshZone:" + client_zone_r[1].replace(/:/g, "");
+    }
+
+    imagepath = `http://${gatewayaddress}/images/splash.jpg`;
+
+    if (searchParams["terms"]) {
+        return (
+            <FasLayout>
+                    <b style={{
+                        color: "red"
+                    }}>Privacy.</b><br/>
+		<b>
+			By logging in to the system, you grant your permission for this system to store any data you provide for
+			the purposes of logging in, along with the networking parameters of your device that the system requires to function.<br />
+			All information is stored for your convenience and for the protection of both yourself and us.<br/>
+			All information collected by this system is stored in a secure manner and is not accessible by third parties.<br/>
+			In return, we grant you FREE Internet access.
+		</b><hr />
+            </FasLayout>
+        );
+    }
+
+    if (searchParams["status"]) {
+        return (
+            <FasLayout>
+                    <p>Status</p>
+            </FasLayout>
+        );
+    }
+
+    if (searchParams["landing"]) {
+        return (
+            <FasLayout>
+                    <med-blue>You are connected to {client_zone}</med-blue><br/>
+		<p>
+			<big-red>
+				You are now logged in and have been granted access to the Internet.
+			</big-red>
+		</p>
+		<hr/>
+		<p>
+			<italic-black>
+				You can use your Browser, Email and other network Apps as you normally would.
+			</italic-black>
+		</p>
+		<p>
+		(Your device originally requested {redir})
+		<hr/>
+		Click or tap Continue to show the status of your account.
+		</p>
+		<RedirForm gatewayurl={gatewayurl} />
+		<hr/>
+            </FasLayout>
+        );
+    }
+
+    if (searchParams["fullname"]) {
+        fullname = searchParams["fullname"];
+    }
+
+    if (searchParams["email"]) {
+        email = searchParams["email"];
+    }
+
+    if (fullname == "" || email == "") {
+        return (
+            <FasLayout>
+                <big-red>Welcome!</big-red><br />
+			    <med-blue>You are connected to {client_zone}</med-blue><br />
+			    <b>Please enter your Full Name and Email Address</b>
+                {
+                    !searchParams["fas"] ?
+                    <>
+                    <br /><b style={{
+                        color: "red"
+                    }}>ERROR! Incomplete data passed from NDS</b>
+                    </>
+                    :
+                    <>
+
+                    <LoginForm fas={fas} me={me} />
+
+				    <hr />
+
+                    <form action={me} method="get">
+                        <input type="hidden" name="fas" value={fas} />
+                        <input type="hidden" name="terms" value="yes" />
+                        <input type="submit" value="Read Terms of Service" />
+                    </form>
+                    </>
+                }
+            </FasLayout>
+        );
+    }
+
+    const authaction = `http://${gatewayaddress}/opennds_auth/`;
+    redir = `http://192.168.4.34:3001/fas/?fas=${fas}&landing=1`
+    const tok = crypto.createHash('sha256').update(hid + process.env.FAS_KEY).digest('hex');
+
+    const custom = btoa(`fullname=${fullname}, email=${email}`)
+
+    return (
+        <FasLayout>
+            <big-red>
+                Thankyou!
+            </big-red>
+            <br/>
+            <b>Welcome {fullname}</b>
+            <br/>
+            <med-blue>You are connected to {client_zone}</med-blue><br/>
+            <italic-black>
+                Your News or Advertising could be here, contact the owners of this Hotspot to find out how!
+            </italic-black>
+            <form action={authaction} method="get">
+                <input type="hidden" name="tok" value={tok} />
+                <input type="hidden" name="custom" value={custom} />
+                <input type="hidden" name="redir" value={redir} /><br/>
+                <input type="submit" value="Continue" />
+            </form>
+            <hr />
+        </FasLayout>
+    );
+}
+
+function FasLayout({ children }) {
+    return (
+        <>
+        <div className="offset">
+            <SplashHeader />
+            <div class="insert">
+                {children}
+                <Footer />
+            </div>
         </div>
-      </div>
+        </>
+    );
+}
 
-      <div className="relative flex place-items-center before:absolute before:h-[300px] before:w-full sm:before:w-[480px] before:-translate-x-1/2 before:rounded-full before:bg-gradient-radial before:from-white before:to-transparent before:blur-2xl before:content-[''] after:absolute after:-z-20 after:h-[180px] after:w-full sm:after:w-[240px] after:translate-x-1/3 after:bg-gradient-conic after:from-sky-200 after:via-blue-200 after:blur-2xl after:content-[''] before:dark:bg-gradient-to-br before:dark:from-transparent before:dark:to-blue-700 before:dark:opacity-10 after:dark:from-sky-900 after:dark:via-[#0141ff] after:dark:opacity-40 before:lg:h-[360px] z-[-1]">
-        <Image
-          className="relative dark:drop-shadow-[0_0_0.3rem_#ffffff70] dark:invert"
-          src="/next.svg"
-          alt="Next.js Logo"
-          width={180}
-          height={37}
-          priority
-        />
-      </div>
+function SplashHeader() {
+    gatewayname = htmlentities(decodeURIComponent(gatewayname));
+    return (
+        <header className="flex flex-col items-center justify-center">
+            <Head>
+                <title>{gatewayname}</title>
+                <link rel="shortcut icon" href={imagepath} type="image/x-icon" />
+                <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+                <meta charset="utf-8" />
+            </Head>
+            <med-blue>{gatewayname}</med-blue>
+            <br />
+        </header>
+    )
+}
 
-      <div className="mb-32 grid text-center lg:max-w-5xl lg:w-full lg:mb-0 lg:grid-cols-4 lg:text-left">
-        <a
-          href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Docs{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Find in-depth information about Next.js features and API.
-          </p>
-        </a>
+function Footer() {
+    const year = new Date().getFullYear();
+    return (
+        <>
+        <hr />
+        <div style={{
+            fontSize: "0.5em"
+        }}>
+			<img style={{
+                height: "60px",
+                width: "60px",
+                float: "left"
+            }} src={imagepath} alt="Splash Page: For access to the Internet." />
+			&copy; The openNDS Project 2015 - {year}<br />
+			Portal Version: {version}
+			<br/><br/><br/><br/>
+		</div>
+        </>
+    )
+}
 
-        <a
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800 hover:dark:bg-opacity-30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Learn{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Learn about Next.js in an interactive course with&nbsp;quizzes!
-          </p>
-        </a>
-
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Templates{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Explore starter templates for Next.js.
-          </p>
-        </a>
-
-        <a
-          href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Deploy{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50 text-balance`}>
-            Instantly deploy your Next.js site to a shareable URL with Vercel.
-          </p>
-        </a>
-      </div>
-    </main>
-  );
+function htmlentities(str) {
+    return str.replace(/[\u00A0-\u9999<>\&]/gim, function(i) {
+       return '&#'+i.charCodeAt(0)+';';
+    });
 }
